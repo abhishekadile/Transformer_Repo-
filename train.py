@@ -161,11 +161,15 @@ def evaluate(
     model: nn.Module,
     val_loader,
     device: torch.device,
-    use_amp: bool = False
+    use_amp: bool = False,
+    max_batches: Optional[int] = 200
 ) -> Tuple[float, float]:
     """
     Evaluate model on validation set.
     
+    Args:
+        max_batches: Limit number of batches for faster evaluation (None for all)
+        
     Returns:
         Tuple of (average loss, perplexity)
     """
@@ -173,8 +177,14 @@ def evaluate(
     total_loss = 0.0
     total_tokens = 0
     
+    # Progress indicator
+    print(f"   Evaluating on {max_batches if max_batches else 'all'} batches...", end="")
+    
     with torch.no_grad():
-        for x, y in val_loader:
+        for i, (x, y) in enumerate(val_loader):
+            if max_batches and i >= max_batches:
+                break
+                
             x, y = x.to(device), y.to(device)
             
             with autocast(enabled=use_amp):
@@ -184,8 +194,12 @@ def evaluate(
             batch_tokens = y.numel()
             total_loss += loss.item() * batch_tokens
             total_tokens += batch_tokens
+            
+            if i % 50 == 0:
+                print(".", end="", flush=True)
     
-    avg_loss = total_loss / total_tokens
+    print() # Newline
+    avg_loss = total_loss / total_tokens if total_tokens > 0 else 0.0
     perplexity = compute_perplexity(avg_loss)
     
     model.train()
@@ -360,7 +374,10 @@ def train(args):
                 if step % args.eval_interval == 0:
                     print("\n")
                     print("📊 Evaluating...")
-                    val_loss, val_ppl = evaluate(model, val_loader, device, args.use_amp)
+                    val_loss, val_ppl = evaluate(
+                        model, val_loader, device, 
+                        args.use_amp, max_batches=200
+                    )
                     print(f"   Validation Loss: {val_loss:.4f} | Perplexity: {val_ppl:.2f}")
                     
                     metrics.update_from_eval(val_loss)

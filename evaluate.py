@@ -131,11 +131,15 @@ def load_model_and_tokenizer(
 def evaluate_perplexity(
     model: GPTModel,
     dataloader,
-    device: torch.device
+    device: torch.device,
+    max_batches: Optional[int] = None
 ) -> Dict[str, float]:
     """
     Evaluate model perplexity on a dataset.
     
+    Args:
+        max_batches: Limit number of batches (None for all)
+        
     Returns:
         Dictionary with evaluation metrics
     """
@@ -145,7 +149,10 @@ def evaluate_perplexity(
     total_correct = 0
     
     with torch.no_grad():
-        for x, y in dataloader:
+        for i, (x, y) in enumerate(dataloader):
+            if max_batches and i >= max_batches:
+                break
+                
             x, y = x.to(device), y.to(device)
             
             output = model(x, labels=y)
