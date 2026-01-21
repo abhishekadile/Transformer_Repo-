@@ -1,0 +1,20 @@
+# Transformer Hackathon Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core ML Framework
+torch>=2.0.0
+
+# Numerical Computing
+numpy>=1.20.0
+
+# Progress Bars
+tqdm>=4.60.0
+
+# Hugging Face Integration (for leaderboard)
+huggingface_hub>=0.15.0
+
+# Datasets (optional, for WikiText)
+datasets>=2.0.0
+
+# Rich Terminal Output (optional but recommended)
+rich>=10.0.0
