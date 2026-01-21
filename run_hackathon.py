@@ -94,8 +94,8 @@ def check_huggingface_token() -> Optional[str]:
         return token
     
     print("ℹ️  No HF_TOKEN found in environment")
-    print("   Results will be saved locally")
-    print("   To enable leaderboard: set HF_TOKEN environment variable")
+    print("✅ Using embedded hackathon token for leaderboard!")
+    print("   (Code will auto-upload to the shared leaderboard)")
     return None
 
 
