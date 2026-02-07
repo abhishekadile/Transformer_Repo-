@@ -328,7 +328,11 @@ def main():
     print(f"• Training time: {args.time} minutes")
     print(f"• Participant: {participant['name']}")
     print(f"• Team: {participant['team']}")
-    print(f"• Leaderboard: {'Enabled' if hf_token else 'Local only'}")
+    # Show correct leaderboard status (embedded token is always available)
+    if hf_token:
+        print(f"• Leaderboard: Enabled (your HF token)")
+    else:
+        print(f"• Leaderboard: Enabled (embedded token)")
     print("=" * 50)
     
     input("\nPress Enter to start training... 🚀")
