@@ -52,6 +52,9 @@ class ScaledDotProductAttention(nn.Module):
         """
         Compute scaled dot-product attention.
         
+        Uses PyTorch's optimized scaled_dot_product_attention (Flash Attention)
+        when available for 2-3x speedup and lower memory usage.
+        
         Args:
             query: Query tensor of shape (batch, heads, seq_q, d_k)
             key: Key tensor of shape (batch, heads, seq_k, d_k)
@@ -64,31 +67,50 @@ class ScaledDotProductAttention(nn.Module):
                 - Output tensor of shape (batch, heads, seq_q, d_v)
                 - Attention weights of shape (batch, heads, seq_q, seq_k)
         """
-        d_k = query.size(-1)
+        # Try to use PyTorch's optimized Flash Attention (available in PyTorch 2.0+)
+        # This is 2-3x faster and uses less memory!
+        if hasattr(F, 'scaled_dot_product_attention') and self.training:
+            # Convert mask format: True -> mask out, need attn_mask where True = attend
+            attn_mask = None
+            if mask is not None:
+                # Invert mask: True (masked) -> False (don't attend)
+                attn_mask = ~mask if mask.dtype == torch.bool else (mask == 0)
+            
+            # Use optimized kernel (Flash Attention 2 if available)
+            output = F.scaled_dot_product_attention(
+                query, key, value,
+                attn_mask=attn_mask,
+                dropout_p=self.dropout.p if self.training else 0.0,
+                is_causal=False  # We handle causality via mask
+            )
+            
+            # For compatibility, return dummy attention weights during training
+            # (Flash Attention doesn't return weights for efficiency)
+            attention_weights = None
+            
+            return output, attention_weights
         
-        # Compute attention scores: QK^T / sqrt(d_k)
-        # (batch, heads, seq_q, d_k) @ (batch, heads, d_k, seq_k) 
-        #   -> (batch, heads, seq_q, seq_k)
-        scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k)
-        
-        # Apply mask if provided (for causal attention or padding)
-        if mask is not None:
-            # Fill masked positions with large negative value
-            # so softmax gives them ~0 weight
-            scores = scores.masked_fill(mask == True, float('-inf'))
-        
-        # Convert to probabilities
-        attention_weights = F.softmax(scores, dim=-1)
-        
-        # Apply dropout to attention weights (not commonly done, but can help)
-        attention_weights = self.dropout(attention_weights)
-        
-        # Apply attention to values
-        # (batch, heads, seq_q, seq_k) @ (batch, heads, seq_k, d_v)
-        #   -> (batch, heads, seq_q, d_v)
-        output = torch.matmul(attention_weights, value)
-        
-        return output, attention_weights
+        else:
+            # Fallback to manual implementation (for inference or older PyTorch)
+            d_k = query.size(-1)
+            
+            # Compute attention scores: QK^T / sqrt(d_k)
+            scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k)
+            
+            # Apply mask if provided
+            if mask is not None:
+                scores = scores.masked_fill(mask == True, float('-inf'))
+            
+            # Convert to probabilities
+            attention_weights = F.softmax(scores, dim=-1)
+            
+            # Apply dropout
+            attention_weights = self.dropout(attention_weights)
+            
+            # Apply attention to values
+            output = torch.matmul(attention_weights, value)
+            
+            return output, attention_weights
 
 
 class MultiHeadAttention(nn.Module):
