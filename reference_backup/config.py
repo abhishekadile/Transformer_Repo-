@@ -67,7 +67,7 @@ class TrainingConfig:
     TODO: Experiment with batch size and learning rate!
     """
     # Time constraint
-    max_time_minutes: float = 60.0  # Updated from 45 for 1-hour training
+    max_time_minutes: float = 45.0
     
     # Batch settings
     batch_size: int = 16
@@ -118,12 +118,10 @@ class DataConfig:
         dataset_name: Name of the dataset to use
         data_dir: Directory to store downloaded data
         train_split: Fraction of data for training
-        max_stories: Number of TinyStories to use (40K for 1-hour T4 training)
         
     TODO: Try different datasets or data augmentation!
     """
-    dataset_name: str = "tinystories"  # Changed from "tiny_shakespeare"
-    max_stories: int = 40000  # Optimized for 1-hour T4 GPU training
+    dataset_name: str = "tiny_shakespeare"  # Options: "tiny_shakespeare", "wikitext"
     data_dir: str = "data/raw"
     
     # Data splits

@@ -112,7 +112,7 @@ def run_training(training_time: float = 45.0) -> Dict:
     
     # Create args namespace
     class Args:
-        max_time = 60  # Updated from 45 for 1-hour training
+        max_time = training_time
         batch_size = 16
         seq_len = 128
         lr = 3e-4

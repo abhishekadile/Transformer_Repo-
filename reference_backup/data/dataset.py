@@ -24,7 +24,7 @@ from data.tokenizer import CharTokenizer
 TINY_SHAKESPEARE_URL = "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt"
 
 
-def download_tinystories(data_dir: str = "data/raw", max_stories: int = 40000) -> str:
+def download_tinystories(data_dir: str = "data/raw", max_stories: int = 50000) -> str:
     """
     Download the TinyStories dataset from Hugging Face.
     
@@ -32,16 +32,9 @@ def download_tinystories(data_dir: str = "data/raw", max_stories: int = 40000) -
     designed for training small language models. It's much larger than
     TinyShakespeare and produces better results.
     
-    Dataset size guide for T4 GPU (1 hour training):
-        - 10K stories (~25 MB): Fast iteration, perplexity ~20-25
-        - 20K stories (~50 MB): Good balance, perplexity ~15-20
-        - 40K stories (~100 MB): Best quality, perplexity ~10-18 ✅ RECOMMENDED
-        - 50K+ stories: May exceed 1 hour
-    
     Args:
         data_dir: Directory to save the file
-        max_stories: Maximum number of stories to use (default: 40000)
-                    Optimized for 1-hour training on T4 GPU.
+        max_stories: Maximum number of stories to use (default: 50000)
                     Use -1 for all stories (~2.1M)
         
     Returns:
@@ -190,16 +183,10 @@ def create_dataloaders(
     train_split: float = 0.9,
     num_workers: int = 0,
     seed: int = 42,
-    max_stories: int = 40000
+    max_stories: int = 50000
 ) -> Tuple[DataLoader, DataLoader, CharTokenizer]:
     """
     Create train and validation dataloaders.
-    
-    Dataset size guide for T4 GPU (1 hour training):
-        - 10K stories (~25 MB): Fast iteration, perplexity ~20-25
-        - 20K stories (~50 MB): Good balance, perplexity ~15-20
-        - 40K stories (~100 MB): Best quality, perplexity ~10-18 ✅ DEFAULT
-        - 50K+ stories: May exceed 1 hour
     
     Args:
         data_path: Path to text file (downloads dataset if None)
@@ -209,8 +196,7 @@ def create_dataloaders(
         train_split: Fraction of data for training
         num_workers: Number of data loading workers
         seed: Random seed for reproducibility
-        max_stories: Max stories for TinyStories (default: 40000)
-                    Optimized for 1-hour training on T4 GPU
+        max_stories: Max stories for TinyStories (default: 50000)
         
     Returns:
         Tuple of (train_loader, val_loader, tokenizer)
